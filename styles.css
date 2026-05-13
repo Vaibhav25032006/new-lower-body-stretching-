@@ -1,131 +1,186 @@
 :root {
-  --bg-0: #070b14;
-  --bg-1: #0f172a;
-  --glass: rgba(15, 23, 42, 0.62);
-  --line: rgba(148, 163, 184, 0.25);
+  --bg: #0b1220;
+  --card: #101a2e;
+  --card-2: #0f172a;
+  --line: rgba(148, 163, 184, 0.22);
   --text: #e6edf8;
   --muted: #94a3b8;
   --accent: #22c55e;
-  --accent-2: #2dd4bf;
-  --shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+  --accent-2: #22d3ee;
 }
+
 * { box-sizing: border-box; }
+
 body {
   margin: 0;
   min-height: 100vh;
   font-family: Inter, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
-  background:
-    radial-gradient(1200px 600px at -20% -10%, rgba(34, 197, 94, 0.16), transparent 60%),
-    radial-gradient(1000px 700px at 120% 0%, rgba(45, 212, 191, 0.14), transparent 58%),
-    linear-gradient(160deg, var(--bg-0) 0%, var(--bg-1) 55%, #0b1220 100%);
+  background: radial-gradient(90% 70% at 50% 0%, #1e293b 0%, var(--bg) 70%);
   display: grid;
   place-items: center;
-  padding: 16px;
+  padding: 12px;
 }
+
+/* Mobile-app style shell */
 .app {
-  width: min(1200px, 100%);
-  border-radius: 22px;
-  padding: 16px;
-  background: var(--glass);
+  width: min(430px, 100%);
+  min-height: 88vh;
+  background: linear-gradient(170deg, var(--card), var(--card-2));
   border: 1px solid var(--line);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow);
+  border-radius: 28px;
+  padding: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-h1 { margin: 0; font-size: clamp(1rem, 2.1vw, 1.4rem); }
-#stepMeta { margin: 0; color: var(--muted); font-weight: 700; }
-.video-wrap { border-radius: 16px; overflow: hidden; border: 1px solid var(--line); }
-iframe { width: 100%; border: 0; aspect-ratio: 16/9; background: #000; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+#stepMeta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.video-wrap {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #000;
+}
+
+iframe {
+  width: 100%;
+  border: 0;
+  aspect-ratio: 16/9;
+}
+
 .info-panel {
   margin-top: 10px;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--line);
-  background: rgba(2, 6, 23, 0.45);
+  background: rgba(15, 23, 42, 0.8);
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 6px 12px;
-}
-#exerciseName { margin: 0; font-size: clamp(1rem, 1.9vw, 1.3rem); }
-.timer { font-size: clamp(1.5rem, 2.8vw, 2rem); color: var(--accent); font-weight: 800; }
-#exerciseHint { margin: 0; grid-column: 1/-1; color: var(--muted); }
-.controls { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
-button, #finalLink {
-  appearance: none;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-button {
-  background: linear-gradient(120deg, var(--accent), #4ade80);
-  color: #04200f;
-}
-button:disabled { opacity: 0.45; cursor: not-allowed; }
-#finalLink {
-  text-decoration: none;
-  color: #062625;
-  background: linear-gradient(120deg, var(--accent-2), #22d3ee);
-  display: inline-block;
-  margin-top: 10px;
-}
-.finish {
-  margin-top: 12px;
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(45, 212, 191, 0.4);
-  background: rgba(6, 78, 59, 0.2);
-}
-.hidden { display: none; }
-.hidden-progress { display: none; }
-
-/* Landscape-first experience */
-@media (orientation: landscape) {
-  .app { max-height: 94vh; overflow: auto; }
-}
-
-@media (orientation: portrait) {
-  .app::after {
-    content: "Best experience: rotate phone to landscape mode.";
-    display: block;
-    margin-top: 10px;
-    color: #fef08a;
-    font-size: 0.85rem;
-  }
-}
-
-.rest-visual {
-  margin-top: 12px;
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(45, 212, 191, 0.35);
-  background: linear-gradient(145deg, rgba(8, 47, 73, 0.35), rgba(15, 23, 42, 0.7));
-  display: grid;
-  place-items: center;
   gap: 8px;
 }
 
+#exerciseName {
+  margin: 0;
+  font-size: 1.04rem;
+  font-weight: 700;
+}
+
+.timer {
+  font-size: 1.8rem;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+#exerciseHint {
+  margin: 0;
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.controls {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+button,
+#finalLink {
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button {
+  color: #04200f;
+  background: linear-gradient(120deg, var(--accent), #4ade80);
+}
+
+button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.finish {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(8, 47, 73, 0.22);
+}
+
+.finish h3,
+.finish p { margin: 0; }
+
+#finalLink {
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 8px;
+  color: #062625;
+  background: linear-gradient(120deg, var(--accent-2), #5eead4);
+}
+
+/* Rest animation: only for rest phase */
+.rest-visual {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: linear-gradient(145deg, rgba(8, 47, 73, 0.35), rgba(15, 23, 42, 0.75));
+  display: grid;
+  place-items: center;
+  gap: 7px;
+}
+
 .rest-ring {
-  width: 120px;
-  height: 120px;
+  width: 108px;
+  height: 108px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 800;
   color: #ecfeff;
   background:
-    radial-gradient(circle at center, rgba(15, 23, 42, 0.9) 45%, transparent 47%),
+    radial-gradient(circle at center, rgba(15, 23, 42, 0.93) 45%, transparent 47%),
     conic-gradient(from 0deg, #22d3ee, #22c55e, #22d3ee);
   animation: pulse 1.2s ease-in-out infinite;
-  box-shadow: 0 0 0 10px rgba(34, 211, 238, 0.1), 0 0 30px rgba(34, 211, 238, 0.25);
+  box-shadow: 0 0 0 8px rgba(34, 211, 238, 0.1), 0 0 26px rgba(34, 211, 238, 0.25);
 }
 
 .rest-ring span { min-width: 2ch; text-align: right; }
+.hidden-progress { display: none; }
+.hidden { display: none !important; }
 
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+  50% { transform: scale(1.05); }
+}
+
+@media (min-width: 800px) and (orientation: landscape) {
+  .app { width: min(920px, 96vw); min-height: auto; }
+  .controls { grid-template-columns: repeat(3, max-content); justify-content: start; }
 }

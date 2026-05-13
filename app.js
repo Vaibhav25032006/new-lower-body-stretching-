@@ -28,6 +28,8 @@ const skipExerciseBtn = document.getElementById('skipExerciseBtn');
 const skipRestBtn = document.getElementById('skipRestBtn');
 const addRestBtn = document.getElementById('addRestBtn');
 const activeControls = document.getElementById('activeControls');
+const restVisual = document.getElementById('restVisual');
+const restSecondsText = document.getElementById('restSecondsText');
 
 let index = 0;
 let secondsLeft = 0;
@@ -74,12 +76,13 @@ function maybeGoToNextStep() {
 
 function startRestPhase() {
   isRestPhase = true;
-  player.src = '';
+  restVisual.classList.remove('hidden');
   exerciseName.textContent = 'Rest / Recovery';
   exerciseHint.textContent = `Auto-next in ${restSeconds}s. You can skip rest or add +10s.`;
   stepMeta.textContent = `Rest after step ${index + 1}`;
   secondsLeft = restSeconds;
   timer.textContent = formatTime(secondsLeft);
+  restSecondsText.textContent = String(secondsLeft);
   skipRestBtn.disabled = false;
   addRestBtn.disabled = false;
 
@@ -87,6 +90,7 @@ function startRestPhase() {
   timerId = setInterval(() => {
     secondsLeft -= 1;
     timer.textContent = formatTime(Math.max(0, secondsLeft));
+    restSecondsText.textContent = String(Math.max(0, secondsLeft));
     if (secondsLeft <= 0) {
       clearPhaseTimer();
       maybeGoToNextStep();
@@ -97,6 +101,7 @@ function startRestPhase() {
 function startStep(i) {
   clearPhaseTimer();
   isRestPhase = false;
+  restVisual.classList.add('hidden');
   skipRestBtn.disabled = true;
   addRestBtn.disabled = true;
 
@@ -133,7 +138,7 @@ function startStep(i) {
 
 function completeRoutine() {
   clearPhaseTimer();
-  player.src = '';
+  restVisual.classList.add('hidden');
   activeControls.classList.add('hidden');
   finishSection.classList.remove('hidden');
   stepMeta.textContent = 'Completed';

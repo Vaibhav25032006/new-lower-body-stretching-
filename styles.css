@@ -60,7 +60,8 @@ h1 {
   background: #000;
 }
 
-iframe {
+iframe,
+#ytPlayer {
   width: 100%;
   border: 0;
   aspect-ratio: 16/9;

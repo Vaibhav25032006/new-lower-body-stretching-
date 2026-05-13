@@ -95,3 +95,37 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     font-size: 0.85rem;
   }
 }
+
+.rest-visual {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  background: linear-gradient(145deg, rgba(8, 47, 73, 0.35), rgba(15, 23, 42, 0.7));
+  display: grid;
+  place-items: center;
+  gap: 8px;
+}
+
+.rest-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #ecfeff;
+  background:
+    radial-gradient(circle at center, rgba(15, 23, 42, 0.9) 45%, transparent 47%),
+    conic-gradient(from 0deg, #22d3ee, #22c55e, #22d3ee);
+  animation: pulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 0 10px rgba(34, 211, 238, 0.1), 0 0 30px rgba(34, 211, 238, 0.25);
+}
+
+.rest-ring span { min-width: 2ch; text-align: right; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}

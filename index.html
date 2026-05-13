@@ -14,13 +14,7 @@
       </header>
 
       <section class="video-wrap">
-        <iframe
-          id="ytPlayer"
-          src=""
-          title="Stretching Video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowfullscreen
-        ></iframe>
+        <div id="ytPlayer" aria-label="Stretching Video"></div>
       </section>
 
       <section class="info-panel">
@@ -34,7 +28,6 @@
         <button id="skipRestBtn" type="button" disabled>Skip Rest</button>
         <button id="addRestBtn" type="button" disabled>+10s Rest</button>
       </section>
-
 
       <section class="rest-visual hidden" id="restVisual" aria-live="polite">
         <div class="rest-ring"><span id="restSecondsText">10</span>s</div>
@@ -50,6 +43,7 @@
       <ol id="exerciseList" class="hidden-progress" aria-hidden="true"></ol>
     </main>
 
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="app.js"></script>
   </body>
 </html>

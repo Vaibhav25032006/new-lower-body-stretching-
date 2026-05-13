@@ -1,5 +1,6 @@
 const videoId = 'b-2a6aOOSso';
 const DEFAULT_REST_SECONDS = 10;
+const STORAGE_KEY = 'stretching-app-state-v2';
 
 const timeline = [
   { name: 'Intro', start: 0 },
@@ -17,7 +18,6 @@ const timeline = [
   { name: 'Kneeling Lunge Stretch (Right)', start: 439 }
 ];
 
-const player = document.getElementById('ytPlayer');
 const exerciseName = document.getElementById('exerciseName');
 const timer = document.getElementById('timer');
 const stepMeta = document.getElementById('stepMeta');
@@ -31,11 +31,11 @@ const activeControls = document.getElementById('activeControls');
 const restVisual = document.getElementById('restVisual');
 const restSecondsText = document.getElementById('restSecondsText');
 
+let player;
+let syncInterval = null;
 let index = 0;
-let secondsLeft = 0;
-let timerId;
 let isRestPhase = false;
-let restSeconds = DEFAULT_REST_SECONDS;
+let secondsLeft = 0;
 
 exerciseList.innerHTML = timeline.map((step) => `<li>${step.name}</li>`).join('');
 
@@ -50,10 +50,6 @@ function formatTime(total) {
   return `${m}:${s}`;
 }
 
-function setIframe(start, end) {
-  player.src = `https://www.youtube.com/embed/${videoId}?start=${start}&end=${end}&autoplay=1&mute=1&playsinline=1&rel=0`;
-}
-
 function paintProgress() {
   [...exerciseList.children].forEach((li, i) => {
     li.classList.toggle('done', i < index);
@@ -61,46 +57,76 @@ function paintProgress() {
   });
 }
 
-function clearPhaseTimer() {
-  clearInterval(timerId);
+function persistState() {
+  const state = { index, isRestPhase, secondsLeft, savedAt: Date.now() };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function restoreState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (typeof s.index === 'number') index = Math.min(Math.max(s.index, 0), timeline.length - 1);
+    if (typeof s.isRestPhase === 'boolean') isRestPhase = s.isRestPhase;
+    if (typeof s.secondsLeft === 'number') secondsLeft = Math.max(0, Math.floor(s.secondsLeft));
+    if (s.savedAt && secondsLeft > 0) {
+      const elapsed = Math.floor((Date.now() - s.savedAt) / 1000);
+      secondsLeft = Math.max(0, secondsLeft - elapsed);
+    }
+  } catch (_) {}
+}
+
+function tryUnmute() {
+  if (!player?.unMute) return;
+  try {
+    player.unMute();
+    player.setVolume(100);
+  } catch (_) {}
+}
+
+function clearSync() {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+  }
 }
 
 function maybeGoToNextStep() {
-  if (index >= timeline.length - 1) {
-    completeRoutine();
-    return;
-  }
+  if (index >= timeline.length - 1) return completeRoutine();
   index += 1;
   startStep(index);
 }
 
-function startRestPhase() {
+function startRestPhase(initialLeft = DEFAULT_REST_SECONDS) {
   isRestPhase = true;
+  clearSync();
   restVisual.classList.remove('hidden');
-  exerciseName.textContent = 'Rest / Recovery';
-  exerciseHint.textContent = `Auto-next in ${restSeconds}s. You can skip rest or add +10s.`;
-  stepMeta.textContent = `Rest after step ${index + 1}`;
-  secondsLeft = restSeconds;
-  timer.textContent = formatTime(secondsLeft);
-  restSecondsText.textContent = String(secondsLeft);
   skipRestBtn.disabled = false;
   addRestBtn.disabled = false;
+  secondsLeft = initialLeft;
+  exerciseName.textContent = 'Rest / Recovery';
+  stepMeta.textContent = `Rest after step ${index + 1}`;
+  exerciseHint.textContent = `Auto-next in ${secondsLeft}s. You can skip rest or add +10s.`;
+  timer.textContent = formatTime(secondsLeft);
+  restSecondsText.textContent = String(secondsLeft);
 
-  clearPhaseTimer();
-  timerId = setInterval(() => {
+  syncInterval = setInterval(() => {
     secondsLeft -= 1;
-    timer.textContent = formatTime(Math.max(0, secondsLeft));
-    restSecondsText.textContent = String(Math.max(0, secondsLeft));
-    if (secondsLeft <= 0) {
-      clearPhaseTimer();
+    const safe = Math.max(0, secondsLeft);
+    timer.textContent = formatTime(safe);
+    restSecondsText.textContent = String(safe);
+    persistState();
+    if (safe <= 0) {
+      clearSync();
       maybeGoToNextStep();
     }
   }, 1000);
 }
 
-function startStep(i) {
-  clearPhaseTimer();
+function startStep(i, resumeSeconds = null) {
   isRestPhase = false;
+  clearSync();
   restVisual.classList.add('hidden');
   skipRestBtn.disabled = true;
   addRestBtn.disabled = true;
@@ -111,33 +137,41 @@ function startStep(i) {
 
   stepMeta.textContent = `Step ${i + 1} of ${timeline.length}`;
   exerciseName.textContent = current.name;
-  exerciseHint.textContent = 'Auto mode: current exercise will move to next automatically.';
-  secondsLeft = duration;
-  timer.textContent = formatTime(secondsLeft);
+  exerciseHint.textContent = 'Auto mode ON. Voice and next step run automatically.';
   paintProgress();
-  setIframe(current.start, end);
 
-  timerId = setInterval(() => {
-    secondsLeft -= 1;
-    timer.textContent = formatTime(Math.max(0, secondsLeft));
+  player.loadVideoById({ videoId, startSeconds: current.start, endSeconds: end, suggestedQuality: 'large' });
+  tryUnmute();
 
-    if (secondsLeft <= 0) {
-      clearPhaseTimer();
+  syncInterval = setInterval(() => {
+    const now = player.getCurrentTime ? player.getCurrentTime() : current.start;
+    const left = Math.max(0, Math.ceil(end - now));
+    secondsLeft = left;
+    timer.textContent = formatTime(left);
+    persistState();
+
+    if (now >= end - 0.2 || left <= 0) {
+      clearSync();
       if (i === timeline.length - 1) {
         completeRoutine();
       } else if (i === 0) {
-        // No rest after Intro.
         index += 1;
         startStep(index);
       } else {
         startRestPhase();
       }
     }
-  }, 1000);
+  }, 500);
+
+  if (resumeSeconds !== null) {
+    const seekTo = Math.max(current.start, end - resumeSeconds);
+    player.seekTo(seekTo, true);
+  }
 }
 
 function completeRoutine() {
-  clearPhaseTimer();
+  clearSync();
+  localStorage.removeItem(STORAGE_KEY);
   restVisual.classList.add('hidden');
   activeControls.classList.add('hidden');
   finishSection.classList.remove('hidden');
@@ -149,22 +183,43 @@ function completeRoutine() {
 }
 
 skipExerciseBtn.addEventListener('click', () => {
-  if (isRestPhase) return;
-  maybeGoToNextStep();
+  if (!isRestPhase) maybeGoToNextStep();
 });
 
 skipRestBtn.addEventListener('click', () => {
   if (!isRestPhase) return;
-  clearPhaseTimer();
+  clearSync();
   maybeGoToNextStep();
 });
 
 addRestBtn.addEventListener('click', () => {
   if (!isRestPhase) return;
   secondsLeft += 10;
-  restSeconds += 10;
   timer.textContent = formatTime(secondsLeft);
+  restSecondsText.textContent = String(secondsLeft);
   exerciseHint.textContent = `Auto-next in ${secondsLeft}s. You can still skip rest.`;
+  persistState();
 });
 
-startStep(index);
+window.addEventListener('beforeunload', persistState);
+['click', 'touchstart', 'keydown'].forEach((ev) => {
+  window.addEventListener(ev, tryUnmute, { passive: true });
+});
+
+window.onYouTubeIframeAPIReady = () => {
+  restoreState();
+  player = new YT.Player('ytPlayer', {
+    videoId,
+    playerVars: { autoplay: 1, playsinline: 1, rel: 0, controls: 1, modestbranding: 1 },
+    events: {
+      onReady: () => {
+        tryUnmute();
+        if (isRestPhase) {
+          startRestPhase(secondsLeft || DEFAULT_REST_SECONDS);
+        } else {
+          startStep(index, secondsLeft > 0 ? secondsLeft : null);
+        }
+      }
+    }
+  });
+};

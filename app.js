@@ -1,5 +1,5 @@
 const videoId = 'b-2a6aOOSso';
-const REST_SECONDS = 12;
+const DEFAULT_REST_SECONDS = 10;
 
 const timeline = [
   { name: 'Intro', start: 0 },
@@ -21,15 +21,19 @@ const player = document.getElementById('ytPlayer');
 const exerciseName = document.getElementById('exerciseName');
 const timer = document.getElementById('timer');
 const stepMeta = document.getElementById('stepMeta');
-const nextBtn = document.getElementById('nextBtn');
 const finishSection = document.getElementById('finishSection');
 const exerciseList = document.getElementById('exerciseList');
 const exerciseHint = document.getElementById('exerciseHint');
+const skipExerciseBtn = document.getElementById('skipExerciseBtn');
+const skipRestBtn = document.getElementById('skipRestBtn');
+const addRestBtn = document.getElementById('addRestBtn');
+const activeControls = document.getElementById('activeControls');
 
 let index = 0;
 let secondsLeft = 0;
 let timerId;
 let isRestPhase = false;
+let restSeconds = DEFAULT_REST_SECONDS;
 
 exerciseList.innerHTML = timeline.map((step) => `<li>${step.name}</li>`).join('');
 
@@ -45,7 +49,7 @@ function formatTime(total) {
 }
 
 function setIframe(start, end) {
-  player.src = `https://www.youtube.com/embed/${videoId}?start=${start}&end=${end}&autoplay=1&rel=0`;
+  player.src = `https://www.youtube.com/embed/${videoId}?start=${start}&end=${end}&autoplay=1&mute=1&playsinline=1&rel=0`;
 }
 
 function paintProgress() {
@@ -55,76 +59,107 @@ function paintProgress() {
   });
 }
 
+function clearPhaseTimer() {
+  clearInterval(timerId);
+}
+
+function maybeGoToNextStep() {
+  if (index >= timeline.length - 1) {
+    completeRoutine();
+    return;
+  }
+  index += 1;
+  startStep(index);
+}
+
 function startRestPhase() {
   isRestPhase = true;
   player.src = '';
   exerciseName.textContent = 'Rest / Recovery';
-  exerciseHint.textContent = `Great! Take ${REST_SECONDS} sec rest, then press Next for the next exercise.`;
+  exerciseHint.textContent = `Auto-next in ${restSeconds}s. You can skip rest or add +10s.`;
   stepMeta.textContent = `Rest after step ${index + 1}`;
-  secondsLeft = REST_SECONDS;
+  secondsLeft = restSeconds;
   timer.textContent = formatTime(secondsLeft);
-  nextBtn.disabled = true;
+  skipRestBtn.disabled = false;
+  addRestBtn.disabled = false;
 
+  clearPhaseTimer();
   timerId = setInterval(() => {
     secondsLeft -= 1;
     timer.textContent = formatTime(Math.max(0, secondsLeft));
     if (secondsLeft <= 0) {
-      clearInterval(timerId);
-      nextBtn.disabled = false;
+      clearPhaseTimer();
+      maybeGoToNextStep();
     }
   }, 1000);
 }
 
 function startStep(i) {
-  clearInterval(timerId);
+  clearPhaseTimer();
   isRestPhase = false;
+  skipRestBtn.disabled = true;
+  addRestBtn.disabled = true;
+
   const current = timeline[i];
   const duration = stepDuration(i);
   const end = current.start + duration;
 
   stepMeta.textContent = `Step ${i + 1} of ${timeline.length}`;
   exerciseName.textContent = current.name;
-  exerciseHint.textContent = 'Watch the movement and hold the stretch with calm breathing.';
+  exerciseHint.textContent = 'Auto mode: current exercise will move to next automatically.';
   secondsLeft = duration;
   timer.textContent = formatTime(secondsLeft);
-  nextBtn.disabled = true;
   paintProgress();
   setIframe(current.start, end);
 
   timerId = setInterval(() => {
     secondsLeft -= 1;
     timer.textContent = formatTime(Math.max(0, secondsLeft));
+
     if (secondsLeft <= 0) {
-      clearInterval(timerId);
+      clearPhaseTimer();
       if (i === timeline.length - 1) {
-        nextBtn.disabled = false;
-        return;
+        completeRoutine();
+      } else if (i === 0) {
+        // No rest after Intro.
+        index += 1;
+        startStep(index);
+      } else {
+        startRestPhase();
       }
-      startRestPhase();
     }
   }, 1000);
 }
 
-nextBtn.addEventListener('click', () => {
-  if (isRestPhase) {
-    index += 1;
-    startStep(index);
-    return;
-  }
+function completeRoutine() {
+  clearPhaseTimer();
+  player.src = '';
+  activeControls.classList.add('hidden');
+  finishSection.classList.remove('hidden');
+  stepMeta.textContent = 'Completed';
+  exerciseName.textContent = 'Routine Complete';
+  exerciseHint.textContent = 'Excellent work! Tap button below to return to your main website.';
+  timer.textContent = '00:00';
+  paintProgress();
+}
 
-  if (index >= timeline.length - 1) {
-    player.src = '';
-    nextBtn.classList.add('hidden');
-    finishSection.classList.remove('hidden');
-    stepMeta.textContent = 'Completed';
-    exerciseName.textContent = 'Routine Complete';
-    exerciseHint.textContent = 'Excellent work! Click below to continue.';
-    timer.textContent = '00:00';
-    paintProgress();
-    return;
-  }
+skipExerciseBtn.addEventListener('click', () => {
+  if (isRestPhase) return;
+  maybeGoToNextStep();
+});
 
-  startRestPhase();
+skipRestBtn.addEventListener('click', () => {
+  if (!isRestPhase) return;
+  clearPhaseTimer();
+  maybeGoToNextStep();
+});
+
+addRestBtn.addEventListener('click', () => {
+  if (!isRestPhase) return;
+  secondsLeft += 10;
+  restSeconds += 10;
+  timer.textContent = formatTime(secondsLeft);
+  exerciseHint.textContent = `Auto-next in ${secondsLeft}s. You can still skip rest.`;
 });
 
 startStep(index);
